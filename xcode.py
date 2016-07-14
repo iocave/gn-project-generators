@@ -15,8 +15,8 @@ except ImportError:
 
 from pprint import pprint
 
-from pbx import *
-from common import *
+from impl.pbx import *
+from impl.common import *
 
 class ProjectGenerator:
 

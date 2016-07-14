@@ -1,7 +1,7 @@
 #!
 import json
-from msvc import ProjectGenerator
-from common import *
+from impl.msvc import ProjectGenerator
+from impl.common import *
 import sys
 
 def run():

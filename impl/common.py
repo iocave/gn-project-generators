@@ -63,12 +63,12 @@ class Target:
 
         base_name = self.output_name
         if base_name is None: # extract name from target
-            basename = self.get_base_name()
+            base_name = self.get_base_name()
         
         if self.output_extension is not None:
-            basename = os.path.splitext(basename)[0]
+            base_name = os.path.splitext(base_name)[0]
             if self.output_extension != "":
-                basename += "." + self.output_extension            
+                base_name += "." + self.output_extension            
 
         return base_name
 
