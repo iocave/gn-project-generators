@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+#
+# XCode project generator
+#
+
 import json
 import os
 import sys
@@ -338,7 +342,7 @@ else:
     print(message)                                              
     exit(1) 
 """)        
-        script_file = project_folder = self.project_definition.get_absolute_build_path() + "invoke_ninja.py"
+        script_file = self.project_definition.get_absolute_build_path() + "invoke_ninja.py"
         overwrite_file_if_different(script_file, output.getvalue())
 
         output.close()

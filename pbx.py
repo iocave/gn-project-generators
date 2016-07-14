@@ -1,3 +1,7 @@
+#
+# Xcode project model
+#
+
 import hashlib
 import struct
 import collections
