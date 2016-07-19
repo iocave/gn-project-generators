@@ -1,4 +1,8 @@
-try:
+#
+# Generic Target and Project representation
+#
+
+try:    
     from enum import Enum
 except ImportError:
     from enum34 import Enum
@@ -14,7 +18,7 @@ class TargetType(Enum):
     shared_library = 4
     static_library = 5
     source_set = 6
-    copy_files = 7
+    copy = 7
     action = 8
     action_foreach = 9
     bundle_data = 10
@@ -42,32 +46,58 @@ class Target:
         self.deps = json_data.get("deps", [])
         self.precompiled_header = json_data.get("precompiled_header", None)
         self.precompiled_source = json_data.get("precompiled_source", None)
+        self.outputs = json_data.get("outputs", [])
         self.output_dir = json_data.get("output_dir", None)
         self.output_name = json_data.get("output_name", None)        
         self.output_extension = json_data.get("output_extension", None)
-        self.bundle_data = json_data.get("bundle_data", None)
+        self.bundle_data = json_data.get("bundle_data", None)        
         self.type = TargetType[json_data["type"].lower()]
-        self.toolchain = json_data["toolchain"]        
+        self.toolchain = json_data["toolchain"]
+        self.source_outputs = json_data.get("source_outputs", {})  
         self.name = name
+        self._source_dir = None
+        self._base_name = None
+        self._obj_dir = None        
 
     def get_output_name(self):
 
-        basename = self.output_name
-        if basename is None: # extract name from target
-            basename = posixpath.basename(self.name)
-            sep = basename.rfind(":")
-            if sep != -1:
-                basename = basename[sep+1:]
+        base_name = self.output_name
+        if base_name is None: # extract name from target
+            base_name = self.get_base_name()
         
         if self.output_extension is not None:
-            basename = os.path.splitext(basename)[0]
+            base_name = os.path.splitext(base_name)[0]
             if self.output_extension != "":
-                basename += "." + self.output_extension            
+                base_name += "." + self.output_extension            
 
-        return basename
+        return base_name
 
-    def get_output_dir(self):
-        
+    def get_base_name(self):
+        if self._base_name is None:
+            base_name = posixpath.basename(self.name)
+            sep = base_name.rfind(":")
+            if sep != -1:
+                base_name = base_name[sep+1:]
+            self._base_name = base_name
+        return self._base_name
+
+    def get_source_dir(self):
+        if self._source_dir is None:
+            index = self.name.rindex(":")
+            name = self.name[:index]
+            if not name.endswith("/"):
+                name += "/"
+            self._source_dir = name
+        return self._source_dir
+
+    def get_obj_dir(self):
+        if self._obj_dir is None:            
+            source = self.get_source_dir()
+            source = source[2:]        
+            self._obj_dir = self.project.build_dir + "obj" + "/" + source
+        return self._obj_dir
+
+    def get_output_dir(self):        
         res = self.output_dir
         if res is None:
             res = self.project.build_dir

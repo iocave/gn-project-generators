@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+#
+# XCode project generator
+#
+
 import json
 import os
 import sys
@@ -11,8 +15,8 @@ except ImportError:
 
 from pprint import pprint
 
-from pbx import *
-from common import *
+from impl.pbx import *
+from impl.common import *
 
 class ProjectGenerator:
 
@@ -346,7 +350,7 @@ except KeyboardInterrupt:
     print("Build interrupted by Xcode")
     exit(0)
 """)        
-        script_file = project_folder = self.project_definition.get_absolute_build_path() + "invoke_ninja.py"
+        script_file = self.project_definition.get_absolute_build_path() + "invoke_ninja.py"
         overwrite_file_if_different(script_file, output.getvalue())
 
         output.close()

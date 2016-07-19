@@ -1,0 +1,35 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "MSVC",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "program": "${workspaceRoot}/dist/msvc2015.py",
+            //"args": ["C:\\Projects\\gn-build\\out-json\\project.json"],
+            "args": ["C:\\Projects\\Chromium\\src\\out-json\\project.json"],
+            // "args": ["C:\\Projects\\Chromium\\src\\out-json2\\project.json"],
+            "debugOptions": [
+                "WaitOnAbnormalExit",
+                "WaitOnNormalExit",
+                "RedirectOutput"
+            ]
+        },
+        {
+            "name": "XCode",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "program": "${workspaceRoot}/dist/xcode.py",
+            //"args": ["C:\\Projects\\gn-build\\out-json\\project.json"],
+            "args": ["C:\\Projects\\Chromium\\src\\out-json\\project.json"],
+            // "args": ["C:\\Projects\\Chromium\\src\\out-json2\\project.json"],
+            "debugOptions": [
+                "WaitOnAbnormalExit",
+                "WaitOnNormalExit",
+                "RedirectOutput"
+            ]
+        }
+    ]
+}

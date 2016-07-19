@@ -1,3 +1,7 @@
+#
+# Xcode project model
+#
+
 import hashlib
 import struct
 import collections
@@ -503,7 +507,7 @@ class XCConfigurationList(PBXObject):
     def add_build_configuration(self, configuration):
         self.get_property("buildConfigurations").append(PBXReference(configuration))
 
-    def get_name(self):
+    def get_name(self):        
         return "Build configuration list for " + self.target.__class__.__name__ + " \"" + self.target.get_name() + "\""
 
 class PBXGroup(PBXObject):
@@ -581,6 +585,7 @@ class PBXNativeTarget(PBXObject):
 
 class PBXLegacyTarget(PBXObject):
     def __init__(self, parent, name, buildToolPath, buildArgumentsString, buildWorkingDir):
+
         PBXObject.__init__(self, parent)
         self.set_property("name", name)
         self.set_property("buildToolPath", buildToolPath)        
