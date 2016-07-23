@@ -1,7 +1,7 @@
 import io
 import uuid
-from common import *
-import easy_xml
+from .common import *
+from . import easy_xml
 import inspect
 import sys
 
@@ -123,7 +123,9 @@ class ProjectGenerator:
                         ["OutDir", self._target_relative_path(target, self.project_definition.build_dir) +"/"]]
         pr.append(other_props)
 
-        include_dirs = map(lambda x : self._target_relative_path(target, x), target.include_dirs)
+        include_dirs = []
+        for dir in target.include_dirs:
+            include_dirs.append(self._target_relative_path(target, dir))        
         include_dirs.append("%(AdditionalIncludeDirectories)")
         defines = target.defines + ["%(PreprocessorDefinitions)"]
 
@@ -283,7 +285,7 @@ class ProjectGenerator:
         def get_solution_folder(solution_folder_path):
             if len(solution_folder_path) == 0:
                 return None
-            elif solution_folders.has_key(solution_folder_path):
+            elif solution_folder_path in solution_folders:
                 return solution_folders[solution_folder_path]
             else:
                 parent, name = posixpath.split(solution_folder_path)

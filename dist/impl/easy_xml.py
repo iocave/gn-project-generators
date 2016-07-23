@@ -9,6 +9,15 @@
 import re
 import os
 
+try:
+    unicode
+except NameError:
+    unicode = str
+
+try:
+    reduce
+except NameError:
+    from functools import reduce as reduce
 
 def xml_to_string(content, encoding='utf-8', pretty=False):
     """Writes the XML content to disk, touching the file only if it has
@@ -86,7 +95,7 @@ def _construct_content_list(xml_parts, specification, pretty, level=0):
     # Optionally in second position is a dictionary of the attributes.
     rest = specification[1:]
     if rest and isinstance(rest[0], dict):
-        for at, val in sorted(rest[0].iteritems()):
+        for at, val in sorted(rest[0].items()):
             xml_parts.append(' %s="%s"' % (at, _xml_escape(val, attr=True)))
         rest = rest[1:]
     if rest:
