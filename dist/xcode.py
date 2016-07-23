@@ -333,14 +333,22 @@ action = None
 if len(sys.argv) == 3:
     action = sys.argv[2]
 
-if action is None:
-    exit(call([ninja, target]))
-elif action == "clean":
-    exit(call([ninja, "-t", "clean", target]))
-else:                                                           
-    message = "Don't know how to perform '" + action + "'"      
-    print(message)                                              
-    exit(1) 
+def run():
+
+    if action is None:
+        exit(call([ninja, target]))
+    elif action == "clean":
+        exit(call([ninja, "-t", "clean", target]))
+    else:
+        message = "Don't know how to perform '" + action + "'"
+        print(message)
+        exit(1).
+
+try:
+    run()
+except KeyboardInterrupt:
+    print("Build interrupted by Xcode")
+    exit(0)
 """)        
         script_file = self.project_definition.get_absolute_build_path() + "invoke_ninja.py"
         overwrite_file_if_different(script_file, output.getvalue())
