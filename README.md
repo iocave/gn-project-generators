@@ -1,6 +1,6 @@
 This repository contains experimental project generators for GN
 
-### dist/xcode.py
+### xcode.py
 
 Generates Xcode project from JSON file. Unlike original GN Xcode generator this one generates separate indexing target for each GN target, which means include directories, defines and precompiled headers should be set properly for every indexed source file.
 
@@ -8,7 +8,7 @@ It also uses Custom build tool for Product targets, so that Clean action from ID
 
 Usage: `gn gen --ide=json --json-ide-script=<path-to>xcode.py out-dir`
 
-### dist/msvc2015.py
+### msvc2015.py
 
 Generates MSVC solution from JSON file. Uses CLCompile items for C/C++ files so that C files are properly indexed as C (they are indexed as C++ when being a custom build tool type resulting in false errors). Supports building single files (ctrl + F7), and PCH for intellisense.
 
