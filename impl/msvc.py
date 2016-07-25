@@ -136,8 +136,12 @@ class ProjectGenerator:
         build_group = ["ItemGroup"]
 
         sources = list(target.sources)
+        
         if target.precompiled_source:
             sources.append(target.precompiled_source)
+            if target.precompiled_header: # see xcode.py
+                header = posixpath.dirname(target.precompiled_source) + "/" + posixpath.basename(target.precompiled_header)
+                sources.append(header)
 
         filter_group_files = ["ItemGroup"]
         filter_group_filters = ["ItemGroup"]
@@ -186,21 +190,58 @@ class ProjectGenerator:
                 none = ["None", {"Include":path}]
                 build_group.append(none)
                 filter_entry = list(none)
-
-            if filter_entry is not None:
+                
+            if filter_entry is not None:                
                 dir = posixpath.relpath(posixpath.dirname(source), target_source_dir)
+                
                 if dir == ".":
-                    dir = ""
-                if len(dir) > 0:
-                    dir = dir.replace("/", "\\")
-                    if not dir in existing_filters:
-                        existing_filters.add(dir)
-                        id = uuid.uuid5(project_uuid, str(dir))
-                        filter_group_filters.append(["Filter", {"Include":dir},
+                    dir = ""           
+                     
+                appended = False
+
+                while len(dir) > 0:                    
+                    win_dir = dir.replace("/", "\\")
+                    if not win_dir in existing_filters:
+                        existing_filters.add(win_dir)
+                        id = uuid.uuid5(project_uuid, str(win_dir))
+                        filter_group_filters.append(["Filter", {"Include":win_dir},
                                                         ["UniqueIdentifier", "{" + str(id) + "}"]])
-                    filter_entry.append(["Filter", dir])                                                                            
+
+                    # only filter once, do not append parent folders                                                        
+                    if not appended:                                                        
+                        filter_entry.append(["Filter", win_dir])
+                        appended = True
+
+                    # filters need to be created for parent folders as well if missing
+                    len_before = len(dir)
+                    dir = posixpath.normpath(posixpath.join(dir, ".."))
+
+                    # if len after appending .. is greater than before we're going too far (i.e. ../../)
+                    if dir == "." or len(dir) > len_before:                        
+                        dir = ""
 
                 filter_group_files.append(filter_entry)
+
+        # For executable targets, try to determine dependency prefix which we can use as base
+        # for %path%; It would be much better if this could be passed from GN, but there's currently no
+        # mechanism that would allow arbitrary arguments for generators
+
+        extra_path = None
+
+        if target.type == TargetType.executable:
+            for lib_dir in target.lib_dirs:                    
+                if lib_dir.find("Program Files") == -1:                        
+                    include = posixpath.normpath(posixpath.join(lib_dir, "../include"))
+                    if include in target.include_dirs or (include + "/") in target.include_dirs:
+                        bin = posixpath.normpath(posixpath.join(lib_dir, "../bin"))
+                        if os.path.isdir(bin):
+                            extra_path = bin
+                            break 
+                    
+        if extra_path:
+            pr.append(["PropertyGroup",
+                ["LocalDebuggerEnvironment", "path=%path%;" + extra_path],
+                ["DebuggerFlavor", "WindowsLocalDebugger"]])                 
             
         pr.append(build_group)
         
@@ -228,6 +269,11 @@ class ProjectGenerator:
                                     "Command": self.directory_lock_path + " . ninja.exe %(ClCompile.OutputFile)",
                                     "WorkingDirectory": "$(OutDir)"}]]
             pr.append(compile_target)
+
+        else: # empty targets for build project
+            pr.append(["Target", {"Name": "Build"}])
+            pr.append(["Target", {"Name": "Clean"}])  
+            pr.append(["Target", {"Name": "ClCompile"}])
 
         project_file_path = self.project_definition.get_absolute_path(self._project_file_path(target))
         if not os.path.exists(posixpath.dirname(project_file_path)):
