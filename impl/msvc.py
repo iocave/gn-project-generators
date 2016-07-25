@@ -46,14 +46,12 @@ class ProjectGenerator:
             if target.toolchain != self.project_definition.default_toolchain: # ignore non default targets
                 continue
 
-            has_compilable_source = False
-            for source in target.sources:
-                
-                name, ext = posixpath.splitext(source)
-                if ext in set(['.c', '.cc', '.cxx', '.cpp']):
-                    has_compilable_source = True
-                    break
-            if has_compilable_source:
+            if (target.type == TargetType.executable or 
+                target.type == TargetType.shared_library or
+                target.type == TargetType.static_library or 
+                target.type == TargetType.loadable_module or
+                target.type == TargetType.source_set or
+                target.type == TargetType.build_dir):
                 self._write_project(target)
                 targets.append(target)
 
@@ -67,7 +65,7 @@ class ProjectGenerator:
             return "DynamicLibrary"
         elif target.type == TargetType.static_library or target.type == TargetType.source_set:
             return "StaticLibrary"
-        return ""
+        return "Application" # default for unknown or build targets
 
     def _target_relative_path(self, target, path):        
         return posixpath.relpath(self.project_definition.get_absolute_path(path), 
@@ -148,7 +146,7 @@ class ProjectGenerator:
 
         for source in sources:
             name, ext = posixpath.splitext(source)
-            path = self._target_relative_path(target, source)
+            path = self._target_relative_path(target, source)            
             filter_entry = None
             if ext in set(['.c', '.cc', '.cxx', '.cpp']):
                 
@@ -184,18 +182,23 @@ class ProjectGenerator:
                 build_group.append(include)
                 filter_entry = list(include)
 
+            else:
+                none = ["None", {"Include":path}]
+                build_group.append(none)
+                filter_entry = list(none)
+
             if filter_entry is not None:
-                if source.startswith(target_source_dir):
-                    dir = posixpath.dirname(source[len(target_source_dir):])
-                    if len(dir) > 0:
-                        dir = dir.replace("/", "\\")
-                        if not dir in existing_filters:
-                            existing_filters.add(dir)
-                            id = uuid.uuid5(project_uuid, str(dir))
-                            filter_group_filters.append(["Filter", {"Include":dir},
-                                                            ["UniqueIdentifier", "{" + str(id) + "}"]])
-                        filter_entry.append(["Filter", dir])                                                            
-                        
+                dir = posixpath.relpath(posixpath.dirname(source), target_source_dir)
+                if dir == ".":
+                    dir = ""
+                if len(dir) > 0:
+                    dir = dir.replace("/", "\\")
+                    if not dir in existing_filters:
+                        existing_filters.add(dir)
+                        id = uuid.uuid5(project_uuid, str(dir))
+                        filter_group_filters.append(["Filter", {"Include":dir},
+                                                        ["UniqueIdentifier", "{" + str(id) + "}"]])
+                    filter_entry.append(["Filter", dir])                                                                            
 
                 filter_group_files.append(filter_entry)
             
@@ -204,25 +207,32 @@ class ProjectGenerator:
         pr.append(["Import", {"Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"}])
         pr.append(["ImportGroup", {"Label": "ExtensionTargets"}])
 
-        build_target_name = target.name[2:]
-        build_target = ["Target", {"Name": "Build"},
-                        ["Exec", {"Command": self.directory_lock_path + " . ninja.exe " +  build_target_name,
-                        "WorkingDirectory": "$(OutDir)"}]]
-        pr.append(build_target)
+        # Only add custom build rules for regular targets, ignore build target
+        # which is not something that ninja knows about
+        if target.type != TargetType.build_dir:
 
-        clean_target = ["Target", {"Name": "Clean"},
-                        ["Exec", {"Command": self.directory_lock_path + " . ninja.exe -t clean " +  build_target_name,
-                        "WorkingDirectory": "$(OutDir)"}]]
-        pr.append(clean_target)
-        
-        compile_target = ["Target", {"Name": "ClCompile", "DependsOnTargets": "SelectClCompile"},
-                        # SelectCLCompile leaves precompiled header creation in, but we can skip it - ninja will take care of that
-                        ["Exec", {"Condition": "'%(ClCompile.PrecompiledHeader)' != 'Create' and '%(ClCompile.ExcludedFromBuild)'!='true' and '%(ClCompile.CompilerIteration)' == '' and @(ClCompile) != ''",
-                                  "Command": self.directory_lock_path + " . ninja.exe %(ClCompile.OutputFile)",
-                                  "WorkingDirectory": "$(OutDir)"}]]
-        pr.append(compile_target)
+            build_target_name = target.name[2:]
+            build_target = ["Target", {"Name": "Build"},
+                            ["Exec", {"Command": self.directory_lock_path + " . ninja.exe " +  build_target_name,
+                            "WorkingDirectory": "$(OutDir)"}]]
+            pr.append(build_target)
+
+            clean_target = ["Target", {"Name": "Clean"},
+                            ["Exec", {"Command": self.directory_lock_path + " . ninja.exe -t clean " +  build_target_name,
+                            "WorkingDirectory": "$(OutDir)"}]]
+            pr.append(clean_target)
+            
+            compile_target = ["Target", {"Name": "ClCompile", "DependsOnTargets": "SelectClCompile"},
+                            # SelectCLCompile leaves precompiled header creation in, but we can skip it - ninja will take care of that
+                            ["Exec", {"Condition": "'%(ClCompile.PrecompiledHeader)' != 'Create' and '%(ClCompile.ExcludedFromBuild)'!='true' and '%(ClCompile.CompilerIteration)' == '' and @(ClCompile) != ''",
+                                    "Command": self.directory_lock_path + " . ninja.exe %(ClCompile.OutputFile)",
+                                    "WorkingDirectory": "$(OutDir)"}]]
+            pr.append(compile_target)
 
         project_file_path = self.project_definition.get_absolute_path(self._project_file_path(target))
+        if not os.path.exists(posixpath.dirname(project_file_path)):
+            os.mkdir(posixpath.dirname(project_file_path))
+        
         easy_xml.write_xml_if_changed(pr, project_file_path, pretty=True)
 
         # filters
@@ -246,17 +256,20 @@ class ProjectGenerator:
         def project_solution_folder_path(target):
             source_dir = target.get_source_dir()
 
-            # if no other projects are in the folder we can remove last segment
-            # otherwise there would be redundant segment in path (i.e. third_party/modp_b64/modp_b64)        
-            alone = True
-            for target2 in targets:
-                if target2 != target and target2.get_source_dir().startswith(source_dir):
-                    alone = False
-                    break
+            # Disabled for now because solution folders are ordered before projects
+            # resulting in confusing order
+            if False:
+                # if no other projects are in the folder we can remove last segment
+                # otherwise there would be redundant segment in path (i.e. third_party/modp_b64/modp_b64)        
+                alone = True
+                for target2 in targets:
+                    if target2 != target and target2.get_source_dir().startswith(source_dir):
+                        alone = False
+                        break
 
-            # only one project in the folder and name matches last path segment
-            if alone and source_dir.endswith("/" + target.get_base_name() + "/"):
-                source_dir = posixpath.join(source_dir, "..")
+                # only one project in the folder and name matches last path segment
+                if alone and source_dir.endswith("/" + target.get_base_name() + "/"):
+                    source_dir = posixpath.join(source_dir, "..")
             
             # normalize path, this will also remove trailing segment
             source_dir = posixpath.normpath(source_dir)
