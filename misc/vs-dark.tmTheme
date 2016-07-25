@@ -1,0 +1,303 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>name</key>
+    <string>vs-dark</string>
+    <key>settings</key>
+    <array>
+      <dict>
+        <key>settings</key>
+        <dict>
+          <key>background</key>
+          <string>#272822</string>
+          <key>foreground</key>
+          <string>#F8F8F2</string>
+          <key>caret</key>
+          <string>#F8F8F0</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> comment, comment.block, comment.block.documentation, comment.line</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#57A64A</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> constant</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#569CD6</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> constant.language</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#569CD6</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> constant.numeric</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#B5CEA8</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> constant.numeric.hex</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#5BB498</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> constant.numeric.octal</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#204070</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> constant.numeric.binary</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#e07070</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> constant.regexp</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#B46695</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> entity</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#9CDCFE</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> entity.name</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#9CDCFE</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> entity.name.function</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#8B89E5</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> entity.name.punctuation</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#DCDCDC</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> entity.name.class, entity.name.type</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#4EC9B0</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> invalid</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#f44747</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> markup.underline markup.bold markup.heading</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#6796e6</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> markup.italic meta</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#D4D4D4</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> storage.type</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#569CD6</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> storage.modifier</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#569CD6</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> annotation.storage.type, heritage.storage.type, cast.storage.type, new.storage.type</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#4EC9B0</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> var.storage.type</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#569CD6</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> var.annotation.storage.type</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#4EC9B0</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> string</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#CE9178</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> string.quoted.variable</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#74B0DF</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> string.regexp</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#D16969</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> variable.parameter</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#9CDCFE</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> variable.language</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#4864AA</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> keyword</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#569CD6</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> keyword.control</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#C586C0</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> keyword.control.import</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#9B9B9B</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> keyword.operator</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#909090</string>
+        </dict>
+      </dict>
+      <dict>
+        <key>scope</key>
+        <string> keyword.operator.new</string>
+        <key>settings</key>
+        <dict>
+          <key>foreground</key>
+          <string>#569CD6</string>
+        </dict>
+      </dict>
+    </array>
+    <key>uuid</key>
+    <string>0DD8F5E2-A4D3-49A9-8CF3-78EE792E2298</string>
+  </dict>
+</plist>
