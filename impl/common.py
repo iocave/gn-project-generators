@@ -2,6 +2,9 @@
 # Generic Target and Project representation
 #
 
+import inspect
+import sys
+
 try:
     from enum import Enum
 except ImportError:
@@ -14,6 +17,15 @@ except NameError:
 
 import posixpath
 import os
+
+def get_script_dir(follow_symlinks=True):
+    if getattr(sys, 'frozen', False): # py2exe, PyInstaller, cx_Freeze
+        path = os.path.abspath(sys.executable)
+    else:
+        path = inspect.getabsfile(get_script_dir)
+    if follow_symlinks:
+        path = os.path.realpath(path)
+    return os.path.dirname(path).replace("\\", "/")
 
 class TargetType(Enum):
     unknown = 0
@@ -64,6 +76,7 @@ class Target:
         self._source_dir = None
         self._base_name = None
         self._obj_dir = None
+        self._precompiled_header = None
 
     def get_output_name(self):
 
@@ -109,6 +122,29 @@ class Target:
             res = self.project.build_dir
 
         return res
+
+    # return precompiled header as project relative source
+    # this is a bit tricky because precompiled header is specified as string 
+    # valid for #incldue <precompiled_header>
+    def get_precompiled_header(self):
+
+        def get(self):
+            if self.precompiled_header:        
+                first = posixpath.normpath(posixpath.join(self.get_source_dir(), self.precompiled_header))
+                if os.path.isfile(self.project.get_absolute_path(first)):
+                    return first
+                
+                for include in self.include_dirs:
+                    if include.startswith("//"):
+                        second = posixpath.normpath(posixpath.join(include, self.precompiled_header))                    
+                        if os.path.isfile(self.project.get_absolute_path(second)):
+                            return second
+            return None
+
+        if not self._precompiled_header:
+            self._precompiled_header = get(self)
+            
+        return self._precompiled_header
 
 class Project:
     def __init__(self, json_data):

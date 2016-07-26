@@ -339,16 +339,24 @@ class PBXObjects(PBXObject):
         self.set_property(o.get_id(), o)
         
 class PBXFileReference(PBXObject):
-    def __init__(self, parent, file_name):
+    def __init__(self, parent, file_name, path = None):
         PBXObject.__init__(self, parent)
         self._single_line = True
-        self.set_property("path", file_name)
+        if path == None:        
+            self.set_property("path", file_name)
+        else:
+            self.set_property("name", file_name)
+            self.set_property("path", path)
+            
         self.set_property("sourceTree", "<group>")
         self.ext = posixpath.splitext(file_name)[1]
         if self.ext != "":
             self.ext = self.ext[1:].lower()
         file_type = PBXFileReference.extension_map.get(self.ext, "text")
-        self.set_property("lastKnownFileType", file_type)
+        if self.ext == "gn" or self.ext == "gni":
+            self.set_property("explicitFileType", file_type)
+        else:
+            self.set_property("lastKnownFileType", file_type)
         
     def get_name(self):
         return self.get_property("path")
@@ -407,6 +415,8 @@ class PBXFileReference(PBXObject):
         'xcdatamodeld': 'wrapper.xcdatamodeld',
         'xib': 'file.xib',
         'y': 'sourcecode.yacc',
+        'gn': 'text.script.perl', # should work well enough
+        'gni': 'text.script.perl',
     }
 
 class PBXFrameworkBuildPhase(PBXObject):

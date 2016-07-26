@@ -2,22 +2,11 @@ import io
 import uuid
 from .common import *
 from . import easy_xml
-import inspect
-import sys
 
 try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
-
-def get_script_dir(follow_symlinks=True):
-    if getattr(sys, 'frozen', False): # py2exe, PyInstaller, cx_Freeze
-        path = os.path.abspath(sys.executable)
-    else:
-        path = inspect.getabsfile(get_script_dir)
-    if follow_symlinks:
-        path = os.path.realpath(path)
-    return os.path.dirname(path).replace("\\", "/")
 
 class ProjectGenerator:
 
@@ -28,7 +17,7 @@ class ProjectGenerator:
         self.platform_toolset = platform_toolset
         self.configuration_name = None
 
-        path_to_lock = posixpath.normpath(posixpath.join(get_script_dir(), "../tools/directory-lock.exe"))
+        path_to_lock = posixpath.normpath(posixpath.join(get_script_dir(), "../tools/directory_lock.exe"))
         
         if path_to_lock.startswith(self.project_definition.root_path.lower()):
             # directory-lock is within project, use relative path
@@ -137,11 +126,8 @@ class ProjectGenerator:
 
         sources = list(target.sources)
         
-        if target.precompiled_source:
-            sources.append(target.precompiled_source)
-            if target.precompiled_header: # see xcode.py
-                header = posixpath.dirname(target.precompiled_source) + "/" + posixpath.basename(target.precompiled_header)
-                sources.append(header)
+        if target.get_precompiled_header():
+            sources.append(target.get_precompiled_header())
 
         filter_group_files = ["ItemGroup"]
         filter_group_filters = ["ItemGroup"]

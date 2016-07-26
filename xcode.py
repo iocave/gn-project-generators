@@ -56,11 +56,18 @@ class ProjectGenerator:
     def get_project_name(self):
         return self.project.get_name()
 
-    def group_for_path(self, path):        
+    def group_for_path(self, path):
+
+        # For root items and items in output folder (args.gn) use main group
+        if (path == "//" or
+            (path + "/") == self.project_definition.build_dir):
+            return self.main_group
+
         assert path.startswith("//")
         path = path[2:]
         
-        segments = path.split("/")
+        segments = path.split("/")                
+
         current_parent = self.main_group
         for segment in segments:
             group = current_parent.get_child(segment)
@@ -159,19 +166,10 @@ class ProjectGenerator:
         if dialect_cc is not None:
             target_bc.build_settings().update({"CLANG_CXX_LANGUAGE_STANDARD" : dialect_cc })
 
-        if (project_target.precompiled_header is not None and 
-            project_target.precompiled_source is not None):
-            # GN is a bit weird about precompiled headers - the header file is just a string and should match
-            # exactly the "#include" value in source files, while source is actual file in source tree;
-            # XCode on the other hand expects GCC_PREFIX_HEADERER to be project relative; So we make an assumption
-            # that precompiled_header and precompiled_source are in same folder, use the path from source and replace
-            # file name with header
-            source_path = self.project_definition.get_relative_path(project_target.precompiled_source)
-            header_name = posixpath.basename(project_target.precompiled_header)
-            source_dir = posixpath.dirname(source_path)
-            precompiled_header = source_dir + "/" + header_name
+        precompiled_header = project_target.get_precompiled_header()
+        if precompiled_header is not None:
             target_bc.build_settings().update({
-                "GCC_PREFIX_HEADER" : precompiled_header,
+                "GCC_PREFIX_HEADER" : project_target.project.get_relative_path(precompiled_header),
                 "GCC_PRECOMPILE_PREFIX_HEADER" : "YES",                
                 "GCC_INCREASE_PRECOMPILED_HEADER_SHARING" : "YES", # Allow sharing headers between targets
                 "PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR" : "NO"
@@ -193,7 +191,8 @@ class ProjectGenerator:
                 target.type != TargetType.static_library and
                 target.type != TargetType.shared_library and
                 target.type != TargetType.loadable_module and
-                target.type != TargetType.source_set): 
+                target.type != TargetType.source_set and
+                target.type != TargetType.build_dir): 
                 continue
 
             # ignore non default targets
@@ -202,7 +201,11 @@ class ProjectGenerator:
 
             compilable_references = []
 
-            for source in target.sources:
+            sources = list(target.sources)
+            if target.get_precompiled_header():                
+                sources.append(target.get_precompiled_header())                
+
+            for source in sources:
 
                 # only deal with single source once, even if it is in multiple targets;
                 # we don't really care, it only needs to be indexed once
@@ -216,7 +219,14 @@ class ProjectGenerator:
                 # add file reference for the source if not there yet
                 file = group.get_child(file_name)
                 if file is None:
-                    file = PBXFileReference(group, file_name)
+
+                    path = None
+
+                    if group == self.main_group:
+                        root = self.project_definition.get_relative_path("//")                        
+                        path = root + "/" + source[2:]                        
+
+                    file = PBXFileReference(group, file_name, path)
                     group.add_child(file)
                     self.objects.add_object(file)
 
@@ -317,43 +327,14 @@ class ProjectGenerator:
                     self._generate_product_target(target_name, app_name, app_dir, True)    
 
     def write_build_script(self):
-        output = StringIO()
-        output.write(
-"""import sys
-from subprocess import call
 
-target = sys.argv[1]
-if target.startswith("//"):
-    target = target[2:]
+        path = posixpath.join(get_script_dir(), "../tools/invoke_ninja.py")
+        with open(path) as f:
+            content = f.read()
+            
+            script_file = self.project_definition.get_absolute_build_path() + "invoke_ninja.py"
+            overwrite_file_if_different(script_file, content)
 
-ninja = "/opt/local/bin/ninja"
-
-action = None
-
-if len(sys.argv) == 3:
-    action = sys.argv[2]
-
-def run():
-
-    if action is None:
-        exit(call([ninja, target]))
-    elif action == "clean":
-        exit(call([ninja, "-t", "clean", target]))
-    else:
-        message = "Don't know how to perform '" + action + "'"
-        print(message)
-        exit(1).
-
-try:
-    run()
-except KeyboardInterrupt:
-    print("Build interrupted by Xcode")
-    exit(0)
-""")        
-        script_file = self.project_definition.get_absolute_build_path() + "invoke_ninja.py"
-        overwrite_file_if_different(script_file, output.getvalue())
-
-        output.close()
     #
     #
     #
