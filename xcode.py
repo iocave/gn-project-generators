@@ -192,6 +192,8 @@ class ProjectGenerator:
                 target.type != TargetType.shared_library and
                 target.type != TargetType.loadable_module and
                 target.type != TargetType.source_set and
+                target.type != TargetType.copy and
+                target.type != TargetType.bundle_data and
                 target.type != TargetType.build_dir):
                 continue
 
@@ -206,6 +208,10 @@ class ProjectGenerator:
                 sources.append(target.get_precompiled_header())
 
             for source in sources:
+
+                # ignore resources that are generated in build folder
+                if source.startswith(self.project_definition.build_dir):
+                    continue
 
                 # only deal with single source once, even if it is in multiple targets;
                 # we don't really care, it only needs to be indexed once
