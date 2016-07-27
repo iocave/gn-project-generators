@@ -17,3 +17,7 @@ Also synchronizes ninja invocations from MSVC on build folder, so that when visu
 Should work with both python 2.7 and 3.
 
 Usage: `gn gen --ide=json --json-ide-script=<path-to>msvc2015.py out-dir`
+
+### Remarks
+
+Both MSVC and Xcode generator expose `.gn` and `.gni` files as well as relevant parts of the `/build` directory. For MSVC a textmate bundle is provided in `misc` directory to get syntax highlighting, for Xcode the project forces file type to perl, which seems to be good enough approximation for gn syntax
