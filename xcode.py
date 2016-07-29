@@ -209,8 +209,9 @@ class ProjectGenerator:
 
             for source in sources:
 
-                # ignore resources that are generated in build folder
-                if source.startswith(self.project_definition.build_dir):
+                # ignore resources that are generated in build folder, except for args.gn
+                if (source.startswith(self.project_definition.build_dir) and
+                    posixpath.basename(source) != "args.gn"):                
                     continue
 
                 # only deal with single source once, even if it is in multiple targets;
