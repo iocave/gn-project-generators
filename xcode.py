@@ -7,6 +7,7 @@
 import json
 import os
 import sys
+import itertools
 
 try:
     from StringIO import StringIO
