@@ -153,6 +153,14 @@ class ProjectGenerator:
             "COMBINE_HIDPI_IMAGES" : "YES"
         })
 
+        warnings_flags = []
+        for flag in itertools.chain(project_target.cflags, project_target.cflags_c, project_target.cflags_cc):
+            if flag.startswith("-W") and flag != "-Werror":
+                warnings_flags.append(flag)
+
+        # for now do not do this; even with flags the indexer behaves in some ways differently than clang
+        # target_bc.build_settings().update({"WARNING_CFLAGS" : warnings_flags})
+
         # try to extract dialect
         dialect_c = self._extract_dialect(None, project_target.cflags_c, False)
         dialect_c = self._extract_dialect(dialect_c, project_target.cflags_objc, False)
