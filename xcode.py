@@ -7,6 +7,7 @@
 import json
 import os
 import sys
+import itertools
 
 try:
     from StringIO import StringIO
@@ -153,6 +154,14 @@ class ProjectGenerator:
             "COMBINE_HIDPI_IMAGES" : "YES"
         })
 
+        warnings_flags = []
+        for flag in itertools.chain(project_target.cflags, project_target.cflags_c, project_target.cflags_cc):
+            if flag.startswith("-W") and flag != "-Werror":
+                warnings_flags.append(flag)
+
+        # for now do not do this; even with flags the indexer behaves in some ways differently than clang
+        # target_bc.build_settings().update({"WARNING_CFLAGS" : warnings_flags})
+
         # try to extract dialect
         dialect_c = self._extract_dialect(None, project_target.cflags_c, False)
         dialect_c = self._extract_dialect(dialect_c, project_target.cflags_objc, False)
@@ -209,8 +218,9 @@ class ProjectGenerator:
 
             for source in sources:
 
-                # ignore resources that are generated in build folder
-                if source.startswith(self.project_definition.build_dir):
+                # ignore resources that are generated in build folder, except for args.gn
+                if (source.startswith(self.project_definition.build_dir) and
+                    posixpath.basename(source) != "args.gn"):                
                     continue
 
                 # only deal with single source once, even if it is in multiple targets;
