@@ -64,6 +64,10 @@ class ProjectGenerator:
             (path + "/") == self.project_definition.build_dir):
             return self.main_group
 
+        # this can happen with resources outside project
+        if path.startswith("/") and not path.startswith("//"):
+            return None
+
         assert path.startswith("//")
         path = path[2:]
 
@@ -147,8 +151,17 @@ class ProjectGenerator:
         for path in project_target.include_dirs:
             header_search_paths.append(self.project_definition.get_relative_path(path))
 
+        framework_search_paths = []
+        for flag in project_target.cflags_objc:
+            if flag.startswith("-F") and flag[2:] not in framework_search_paths:            
+                framework_search_paths.append(flag[2:])    
+        for flag in project_target.cflags_objcc:
+            if flag.startswith("-F") and flag[2:] not in framework_search_paths:
+                framework_search_paths.append(flag[2:])
+
         target_bc.build_settings().update({
             "HEADER_SEARCH_PATHS" : header_search_paths,
+            "FRAMEWORK_SEARCH_PATHS" : framework_search_paths,
             "GCC_PREPROCESSOR_DEFINITIONS" : project_target.defines,
             "PRODUCT_NAME" : product_name,
             "COMBINE_HIDPI_IMAGES" : "YES"
@@ -232,6 +245,13 @@ class ProjectGenerator:
                 folder_path, file_name = posixpath.split(source)
                 group = self.group_for_path(folder_path)
 
+                if group is None:
+                    path = target_name[0 : target_name.rfind(":")]
+                    group = self.group_for_path(path)
+
+                if group is None:
+                    continue
+
                 # add file reference for the source if not there yet
                 file = group.get_child(file_name)
                 if file is None:
@@ -239,8 +259,13 @@ class ProjectGenerator:
                     path = None
 
                     if group == self.main_group:
-                        root = self.project_definition.get_relative_path("//")
-                        path = root + "/" + source[2:]
+                        if source.startswith("//"):
+                            root = self.project_definition.get_relative_path("//")
+                            path = root + "/" + source[2:]
+
+                    # absolute path
+                    if source.startswith("/") and not source.startswith("//"):
+                            path = source
 
                     file = PBXFileReference(group, file_name, path)
                     group.add_child(file)
