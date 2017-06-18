@@ -22,7 +22,10 @@ def run():
 
         project = Project(js)
 
-        generator = ProjectGenerator(project, solution_name, tools_version = "15.0", platform_toolset = "v141")
+        generator = ProjectGenerator(project, solution_name,
+                                     tools_version="15.0",
+                                     platform_toolset="v141",
+                                     target_platform_version="10.0.15063.0")
         count = generator.generate()
 
         print("Done generating " + str(count) + " project file(s)")

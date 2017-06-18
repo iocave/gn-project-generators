@@ -10,12 +10,13 @@ except ImportError:
 
 class ProjectGenerator:
 
-    def __init__(self, project_definition, solution_name, tools_version, platform_toolset):
+    def __init__(self, project_definition, solution_name, tools_version, platform_toolset, target_platform_version=None):
         self.project_definition = project_definition
         self.solution_name = solution_name
         self.tool_version = tools_version
         self.platform_toolset = platform_toolset
         self.configuration_name = None
+        self.target_platform_version = target_platform_version
 
         path_to_lock = posixpath.normpath(posixpath.join(get_script_dir(), "../tools/directory_lock.exe"))
 
@@ -94,6 +95,10 @@ class ProjectGenerator:
                     ["ProjectGuid", "{" + str(project_uuid) + "}"],
                     ["Keyword", "Win32Proj"],
                     ["RootNamespace", target.get_base_name()]]
+
+        if self.target_platform_version:
+            globals.append(["WindowsTargetPlatformVersion", self.target_platform_version])
+
         pr.append(globals)
 
         pr.append(["Import", {"Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"}])
