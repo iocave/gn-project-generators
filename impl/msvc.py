@@ -239,7 +239,7 @@ class ProjectGenerator:
 
         if extra_path:
             pr.append(["PropertyGroup",
-                ["LocalDebuggerEnvironment", "path=%path%;" + extra_path],
+                ["LocalDebuggerEnvironment", "path=" + extra_path + ";%path%"],
                 ["DebuggerFlavor", "WindowsLocalDebugger"]])
 
         pr.append(build_group)
