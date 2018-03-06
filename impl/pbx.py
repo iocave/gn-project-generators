@@ -22,17 +22,17 @@ except NameError:
     xrange = range
 
 #
-class PBXObject:    
-    
+class PBXObject:
+
     # hash_parent optionally specifies object that contributes hashable to this PBXObject
     def __init__(self, hash_parent = None):
         self._single_line = False
-        self._properties = {}        
-        self._hash_parent = hash_parent                
+        self._properties = {}
+        self._hash_parent = hash_parent
         self._id = None
         self._id_digest = None
         self._hashables = None
-    
+
     def set_property(self, key, value):
         self._properties[key] = value
 
@@ -44,14 +44,14 @@ class PBXObject:
 
     def get_comment(self):
         return self.get_name()
-    
+
     def get_class(self):
         return self.__class__.__name__
 
     def get_hashables(self):
 
         if self._hashables is None:
-        
+
             self._hashables = [self.__class__.__name__]
 
             name = self.get_name()
@@ -67,7 +67,7 @@ class PBXObject:
             self._hashables.extend(self._additional_hashables())
 
         return self._hashables
-        
+
     def _additional_hashables(self):
         return []
 
@@ -90,7 +90,7 @@ class PBXObject:
 
         return self._id_digest
 
-    def get_id(self):        
+    def get_id(self):
 
         def compute_id(self):
             digest = self.get_id_digest()
@@ -106,34 +106,34 @@ class PBXObject:
             for index in xrange(0, digest_int_count):
                 id_ints[index % 3] ^= digest_ints[index]
             return '%08X%08X%08X' % tuple(id_ints)
-            
+
         if self._id is None:
             self._id = compute_id(self)
 
         return self._id
-    
+
     def _should_output_class_name(self):
-        return True 
+        return True
 
     def write_object(self, indent, file):
         items = collections.OrderedDict()
 
         if (self._should_output_class_name()):
-            items["isa"] = self.__class__.__name__        
+            items["isa"] = self.__class__.__name__
 
         for key, value in sorted(self._properties.items()):
             items[key] = value
-        
+
         PBXObject._write_iterable(items.items(), self._single_line, indent, file)
 
-    @staticmethod 
+    @staticmethod
     def _write_single_property(key, value, single_line, indent, file):
         def write_value(indent, value):
             if isinstance(value, bool):
                 if value:
                     file.write("YES")
                 else:
-                    file.write("NO")  
+                    file.write("NO")
             elif isinstance(value, int):
                 file.write(str(value))
             elif isinstance(value, str):
@@ -156,7 +156,7 @@ class PBXObject:
                 file.write(")")
             else:
                 PBXObject._write_iterable(sorted(value.items()), single_line, indent, file)
-            
+
         file.write(key)
         if isinstance(value, PBXObject) and value.get_comment() is not None:
             file.write(" /* ")
@@ -170,7 +170,7 @@ class PBXObject:
     def _write_iterable(iterable, single_line, indent, file):
 
         file.write("{")
-        
+
         first = True
         for key, value in iterable:
 
@@ -189,7 +189,7 @@ class PBXObject:
             file.write("\n" + "\t" * indent + "}")
 
     # _encode_string - from gyp's xcode_proj.py
-    
+
     _encode_transforms = []
     i = 0
     while i < ord(' '):
@@ -228,7 +228,7 @@ class PBXObject:
     @staticmethod
     def _encode_string(value, single_line):
         """Encodes a string to be placed in the project file output, mimicking Xcode behavior."""
-        
+
         def encode_transform(match):
             # This function works closely with _EncodeString.  It will only be called
             # by re.sub with match.group(0) containing a character matched by the
@@ -242,7 +242,7 @@ class PBXObject:
                 return '\\\\'
             if char == '"':
                 return '\\"'
-            transforms = PBXObject._alternate_encode_transforms if single_line else PBXObject._encode_transforms            
+            transforms = PBXObject._alternate_encode_transforms if single_line else PBXObject._encode_transforms
             return transforms[ord(char)]
 
         # Use quotation marks when any character outside of the range A-Z, a-z, 0-9,
@@ -277,14 +277,14 @@ class PBXObject:
         if PBXObject._unquoted.search(value) and not PBXObject._quoted.search(value):
             return value
 
-        return '"' + PBXObject._escaped.sub(encode_transform, value) + '"'            
+        return '"' + PBXObject._escaped.sub(encode_transform, value) + '"'
 
 class PBXContainer(PBXObject):
 
     def __init__(self):
         PBXObject.__init__(self)
         self.set_property("archiveVersion", 1)
-        self.set_property("classes", { })    
+        self.set_property("classes", { })
         self.set_property("objectVersion", 46)
         self.set_property("objects", PBXObjects(self))
 
@@ -316,7 +316,7 @@ class PBXObjects(PBXObject):
             class_name = value.__class__.__name__
             if class_name not in object_by_class:
                 object_by_class[class_name] = {}
-            object_by_class[class_name][key] = value 
+            object_by_class[class_name][key] = value
 
         for class_name, objects in sorted(object_by_class.items()):
             file.write("\n/* Begin " + class_name + " section */\n")
@@ -324,7 +324,7 @@ class PBXObjects(PBXObject):
             for key2, value2 in sorted(objects.items()):
                 file.write("\t" * (indent + 1))
                 PBXObject._write_single_property(key2, value2, False, indent, file)
-                file.write("\n")                
+                file.write("\n")
 
             file.write("/* End " + class_name + " section */\n")
 
@@ -337,31 +337,31 @@ class PBXObjects(PBXObject):
         # Assertion here means hash collision
         assert(self._properties.get(o.get_id()) == None)
         self.set_property(o.get_id(), o)
-        
+
 class PBXFileReference(PBXObject):
     def __init__(self, parent, file_name, path = None):
         PBXObject.__init__(self, parent)
         self._single_line = True
-        if path == None:        
+        if path == None:
             self.set_property("path", file_name)
         else:
             self.set_property("name", file_name)
             self.set_property("path", path)
-            
+
         self.set_property("sourceTree", "<group>")
         self.ext = posixpath.splitext(file_name)[1]
         if self.ext != "":
             self.ext = self.ext[1:].lower()
         file_type = PBXFileReference.extension_map.get(self.ext, "text")
-        if self.ext == "gn" or self.ext == "gni":
+        if self.ext == "gn" or self.ext == "gni" or self.ext == "dart":
             self.set_property("explicitFileType", file_type)
         else:
             self.set_property("lastKnownFileType", file_type)
-        
+
     def get_name(self):
         return self.get_property("path")
 
-    def make_build_product_executable(self):        
+    def make_build_product_executable(self):
         self.set_property("lastKnownFileType", "compiled.mach-o.executable")
         self.set_property("sourceTree", "BUILT_PRODUCTS_DIR")
 
@@ -381,7 +381,6 @@ class PBXFileReference(PBXObject):
         'cpp': 'sourcecode.cpp.cpp',
         'css': 'text.css',
         'cxx': 'sourcecode.cpp.cpp',
-        'dart': 'sourcecode',
         'dylib': 'compiled.mach-o.dylib',
         'framework': 'wrapper.framework',
         'gyp': 'sourcecode',
@@ -417,11 +416,12 @@ class PBXFileReference(PBXObject):
         'y': 'sourcecode.yacc',
         'gn': 'text.script.perl', # should work well enough
         'gni': 'text.script.perl',
+        'dart': 'sourcecode.java' # close enough
     }
 
 class PBXFrameworkBuildPhase(PBXObject):
     def __init__(self, parent):
-        PBXObject.__init__(self, parent)                        
+        PBXObject.__init__(self, parent)
 
     def get_name(self):
         return "Frameworks"
@@ -451,10 +451,10 @@ class PBXBuildFile(PBXObject):
         return self._file_ref.get_name() + " in " + self._build_phase.get_name()
 
     def name(self):
-        return self._file_ref.get_name() 
+        return self._file_ref.get_name()
 
     def _additional_hashables(self):
-        l = []        
+        l = []
         l.extend(self._file_ref.get_hashables())
         l.extend(self._build_phase.get_hashables())
         return l
@@ -479,7 +479,7 @@ class PBXProject(PBXObject):
     def get_name(self):
         return self.name
 
-    def get_comment(self):   
+    def get_comment(self):
         return "Project object"
 
     def add_target(self, target):
@@ -502,7 +502,7 @@ class XCBuildConfiguration(PBXObject):
         PBXObject.__init__(self, parent)
         self.set_property("name", name)
         self.set_property("buildSettings", {})
-        
+
     def get_name(self):
         return self.get_property("name")
 
@@ -518,12 +518,12 @@ class XCConfigurationList(PBXObject):
     def add_build_configuration(self, configuration):
         self.get_property("buildConfigurations").append(PBXReference(configuration))
 
-    def get_name(self):        
+    def get_name(self):
         return "Build configuration list for " + self.target.__class__.__name__ + " \"" + self.target.get_name() + "\""
 
 class PBXGroup(PBXObject):
     def __init__(self, parent, name = None, path = None):
-        PBXObject.__init__(self, parent)        
+        PBXObject.__init__(self, parent)
 
         if path is None:
             path = name
@@ -533,7 +533,7 @@ class PBXGroup(PBXObject):
 
         if self.path is not None:
             self.set_property("path", self.path)
-        
+
         if self.name is not None and self.name != self.path:
             self.set_property("name", self.name)
 
@@ -541,13 +541,13 @@ class PBXGroup(PBXObject):
         self.set_property("children", [])
 
         self._child_map = {}
-        
+
     def add_child(self, group):
         self.get_property("children").append(PBXReference(group))
         self._child_map[group.get_name()] = group
 
     def get_child(self, name):
-        return self._child_map.get(name, None)        
+        return self._child_map.get(name, None)
 
     def get_name(self):
         return self.name
@@ -559,7 +559,7 @@ class PBXGroup(PBXObject):
         return l
 
     def write_object(self, indent, file):
-   
+
         # python 2.7 does not have casefold, we'll use lower() instead
         cf = lambda x : x.casefold()
         try:
@@ -572,7 +572,7 @@ class PBXGroup(PBXObject):
             prefix = "1" if isinstance(ref, PBXGroup) else "2"
             return prefix + cf(ref.get_name())
 
-        children = self.get_property("children")        
+        children = self.get_property("children")
         children.sort(key=sort_key)
         PBXObject.write_object(self, indent, file)
 
@@ -582,7 +582,7 @@ class PBXNativeTarget(PBXObject):
         self.set_property("name", name)
         self.set_property("productName", product_name)
         self.set_property("buildPhases", [])
-        self.set_property("buildRules", [])        
+        self.set_property("buildRules", [])
         self.set_property("productType", product_type)
 
     def get_name(self):
@@ -599,7 +599,7 @@ class PBXLegacyTarget(PBXObject):
 
         PBXObject.__init__(self, parent)
         self.set_property("name", name)
-        self.set_property("buildToolPath", buildToolPath)        
+        self.set_property("buildToolPath", buildToolPath)
         self.set_property("buildArgumentsString", buildArgumentsString)
         self.set_property("buildWorkingDirectory", buildWorkingDir)
         self.set_property("buildPhases", [])
@@ -621,7 +621,7 @@ class PBXReference(PBXObject):
     def __init__(self, referenced_object):
         PBXObject.__init__(self, None)
         self.referenced_object = referenced_object
-    
+
     def write_object(self, indent, file):
         file.write(self.referenced_object.get_id())
         comment = self.referenced_object.get_comment()

@@ -24,9 +24,10 @@ def run():
     global action
     
     if action is None:
-        args += [target]        
+        if target != "alltargets":
+            args += [target]
     elif action == "clean":
-        args += ["-t", "clean", target]        
+        args += ["-t", "clean", target]
     else:
         message = "Don't know how to perform '" + action + "'"
         print(message)

@@ -153,18 +153,23 @@ class ProjectGenerator:
 
         framework_search_paths = []
         for flag in project_target.cflags_objc:
-            if flag.startswith("-F") and flag[2:] not in framework_search_paths:            
-                framework_search_paths.append(flag[2:])    
+            if flag.startswith("-F") and flag[2:] not in framework_search_paths:
+                framework_search_paths.append(flag[2:])
         for flag in project_target.cflags_objcc:
             if flag.startswith("-F") and flag[2:] not in framework_search_paths:
                 framework_search_paths.append(flag[2:])
+
+        sdkroot = "macosx"
+        if project_target.toolchain.find("ios") != -1:
+            sdkroot = "iphoneos"
 
         target_bc.build_settings().update({
             "HEADER_SEARCH_PATHS" : header_search_paths,
             "FRAMEWORK_SEARCH_PATHS" : framework_search_paths,
             "GCC_PREPROCESSOR_DEFINITIONS" : project_target.defines,
             "PRODUCT_NAME" : product_name,
-            "COMBINE_HIDPI_IMAGES" : "YES"
+            "COMBINE_HIDPI_IMAGES" : "YES",
+            "SDKROOT" : sdkroot
         })
 
         warnings_flags = []
@@ -233,7 +238,7 @@ class ProjectGenerator:
 
                 # ignore resources that are generated in build folder, except for args.gn
                 if (source.startswith(self.project_definition.build_dir) and
-                    posixpath.basename(source) != "args.gn"):                
+                    posixpath.basename(source) != "args.gn"):
                     continue
 
                 # only deal with single source once, even if it is in multiple targets;
