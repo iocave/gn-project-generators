@@ -10,6 +10,10 @@ args = []
 
 if os.path.isfile("ninja"):
     args += ["./ninja"]
+elif os.path.isfile("/usr/local/bin/ninja"):
+    args += ["/usr/local/bin/ninja"]
+elif os.path.isfile("/opt/local/bin/ninja"):
+    args += ["/opt/local/bin/ninja"]
 else:
     args += ["ninja"]
 
