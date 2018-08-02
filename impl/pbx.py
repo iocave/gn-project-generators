@@ -466,7 +466,7 @@ class PBXProject(PBXObject):
 
         self.set_property("attributes", {
             "BuildIndependentTargetsInParallel" : True,
-            "LastUpgradeCheck" : "0800"
+            "LastUpgradeCheck" : "1000"
         })
         self.set_property("compatibilityVersion", "Xcode 3.2")
         self.set_property("developmentRegion", "English")

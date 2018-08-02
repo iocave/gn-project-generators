@@ -371,7 +371,10 @@ class ProjectGenerator:
             elif target.type == TargetType.create_bundle:
 
                 if (target.bundle_data.get("product_type", "") == "com.apple.product-type.application"):
-                    app_dir, app_name = posixpath.split(target.bundle_data["root_dir_output"])
+                    root_dir_output = target.bundle_data["root_dir_output"]
+                    app_dir, app_name = posixpath.split(root_dir_output)
+                    if app_name == "Contents": # newer gn verison includes Contents
+                        app_dir, app_name = posixpath.split(app_dir)
 
                     self._generate_product_target(target_name, app_name, app_dir, True)
 
@@ -433,6 +436,27 @@ class WorkspaceGenerator:
         project_file = workspace_folder + "/contents.xcworkspacedata"
         if not overwrite_file_if_different(project_file, new_content):
             print("No changes detected - will not overwrite workspace file")
+
+        output.close()
+
+        output = StringIO()
+        output.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+        output.write("<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n")
+        output.write("<plist version=\"1.0\">\n")
+        output.write("<dict>\n")
+        output.write("    <key>BuildSystemType</key>\n")
+        output.write("    <string>Original</string>\n")
+        output.write("</dict>\n")
+        output.write("</plist>\n")
+
+        new_content = output.getvalue()
+        shared_data_folder = workspace_folder + "/xcshareddata"
+        if not os.path.exists(shared_data_folder):
+            os.makedirs(shared_data_folder)
+
+        settings_file = shared_data_folder + "/WorkspaceSettings.xcsettings"
+        if not overwrite_file_if_different(settings_file, new_content):
+            print("No changes detected - will not overwrite workspace settings file")
 
         output.close()
 
