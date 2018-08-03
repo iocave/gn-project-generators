@@ -1,5 +1,6 @@
 import io
 import uuid
+import subprocess
 from .common import *
 from . import easy_xml
 
@@ -7,6 +8,11 @@ try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
+
+try:
+    unicode
+except NameError:
+    unicode = str
 
 class ProjectGenerator:
 
@@ -18,6 +24,11 @@ class ProjectGenerator:
         self.configuration_name = None
         self.target_platform_version = target_platform_version
 
+        if (self.target_platform_version == None):
+            env = self._get_visual_studio_env(self.tool_version, "x64")
+            self.target_platform_version = env["WINDOWSSDKVERSION"][:-1] # remove trailing \
+            print("Detected SDK version: " + self.target_platform_version)
+
         path_to_lock = posixpath.normpath(posixpath.join(get_script_dir(), "../tools/directory_lock.exe"))
 
         if path_to_lock.startswith(self.project_definition.root_path.lower()):
@@ -26,6 +37,91 @@ class ProjectGenerator:
 
         # Relative paths need to be in windows format, otherwise .. prefix won't be handled correctly
         self.directory_lock_path = path_to_lock.replace("/", "\\")
+
+    def _registry_get_value(self, key, value):
+        """Use the _winreg module to obtain the value of a registry key.
+
+        Args:
+            key: The registry key.
+            value: The particular registry value to read.
+        Return:
+            contents of the registry key's value, or None on failure.  Throws
+            ImportError if _winreg is unavailable.
+        """
+
+        try:
+            import _winreg
+        except ImportError:
+            import winreg as _winreg
+
+        try:
+            root, subkey = key.split('\\', 1)
+            assert root == 'HKLM'  # Only need HKLM for now.
+            with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, subkey) as hkey:
+                return _winreg.QueryValueEx(hkey, value)[0]
+        except WindowsError:
+            return None
+
+    def _get_visual_studio_path(self, version):
+        if version == "15.0":
+            # The VC++ 2017 install location needs to be located using COM instead of
+            # the registry. For details see:
+            # https://blogs.msdn.microsoft.com/heaths/2016/09/15/changes-to-visual-studio-15-setup/
+            # For now we use a hardcoded default with an environment variable override.
+            for path in (
+                    os.environ.get('vs2017_install'),
+                    r'C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional',
+                    r'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community'):
+                if path and os.path.exists(path):
+                    return path
+        else:
+            keys = [r'HKLM\Software\Microsoft\VisualStudio\%s' % version,
+                    r'HKLM\Software\Wow6432Node\Microsoft\VisualStudio\%s' % version]
+            for key in keys:
+                path = self._registry_get_value(key, 'InstallDir')
+                if not path:
+                    continue
+                path = os.path.normpath(os.path.join(path, '..', '..'))
+                return path
+
+        return None
+
+    def _load_env_from_bat(self, args):
+        """Given a bat command, runs it and returns env vars set by it."""
+        args = args[:]
+        args.extend(('&&', 'set'))
+        popen = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        variables, _ = popen.communicate()
+        if popen.returncode != 0:
+            raise Exception('"%s" failed with error %d' % (args, popen.returncode))
+        if str == unicode:
+            variables = variables.decode("UTF-8")
+        return variables
+
+    def _extract_important_env(self, output_of_set):
+        """Extracts environment variables required for the toolchain to run from
+        a textual dump output by the cmd.exe 'set' command."""
+        env = {}
+        # This occasionally happens and leads to misleading SYSTEMROOT error messages
+        # if not caught here.
+
+        if output_of_set.count('=') == 0:
+            raise Exception('Invalid output_of_set. Value is:\n%s' % output_of_set)
+        for line in output_of_set.splitlines():
+            if line.startswith("*") or line.find("=") == -1:
+                continue
+            parts = line.split("=", 2)
+            if len(parts) != 2:
+                raise Exception("Invalit environment line %s" % line)
+            env[parts[0].upper()] = parts[1]
+        return env
+
+
+    def _get_visual_studio_env(self, version, platform):
+        vspath = self._get_visual_studio_path(version)
+        env = self._load_env_from_bat([vspath + "\\VC\\Auxiliary\\Build\\vcvarsall.bat", platform])
+        env = self._extract_important_env(env)
+        return env
 
     def generate(self):
 

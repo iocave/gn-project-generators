@@ -24,8 +24,7 @@ def run():
 
         generator = ProjectGenerator(project, solution_name,
                                      tools_version="15.0",
-                                     platform_toolset="v141",
-                                     target_platform_version="10.0.15063.0")
+                                     platform_toolset="v141")
         count = generator.generate()
 
         print("Done generating " + str(count) + " project file(s)")
