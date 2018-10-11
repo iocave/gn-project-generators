@@ -14,6 +14,14 @@ try:
 except NameError:
     unicode = str
 
+def _relpath(path1, path2):
+    def _fix_drive_letter(path):
+        if len(path) >= 3 and path[1] == ':' and path[2] == '/':
+            return path[0].lower() + path[1:]
+        else:
+            return path
+    return posixpath.relpath(_fix_drive_letter(path1), _fix_drive_letter(path2))
+
 class ProjectGenerator:
 
     def __init__(self, project_definition, solution_name, tools_version, platform_toolset, target_platform_version=None):
@@ -33,7 +41,7 @@ class ProjectGenerator:
 
         if path_to_lock.startswith(self.project_definition.root_path.lower()):
             # directory-lock is within project, use relative path
-            path_to_lock = posixpath.relpath(path_to_lock, self.project_definition.get_absolute_build_path().lower())
+            path_to_lock = _relpath(path_to_lock, self.project_definition.get_absolute_build_path().lower())
 
         # Relative paths need to be in windows format, otherwise .. prefix won't be handled correctly
         self.directory_lock_path = path_to_lock.replace("/", "\\")
@@ -154,8 +162,8 @@ class ProjectGenerator:
         return "Application" # default for unknown or build targets
 
     def _target_relative_path(self, target, path):
-        return posixpath.relpath(self.project_definition.get_absolute_path(path),
-                                 self.project_definition.get_absolute_path(target.get_obj_dir()))
+        return _relpath(self.project_definition.get_absolute_path(path),
+                        self.project_definition.get_absolute_path(target.get_obj_dir()))
 
     def _project_file_path(self, target):
         return target.get_obj_dir() + target.get_base_name() + ".vcxproj"
@@ -287,7 +295,7 @@ class ProjectGenerator:
                 filter_entry = list(none)
 
             if filter_entry is not None:
-                dir = posixpath.relpath(posixpath.dirname(source), target_source_dir)
+                dir = _relpath(posixpath.dirname(source), target_source_dir)
 
                 if dir == ".":
                     dir = ""
