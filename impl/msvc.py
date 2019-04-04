@@ -127,7 +127,17 @@ class ProjectGenerator:
 
     def _get_visual_studio_env(self, version, platform):
         vspath = self._get_visual_studio_path(version)
-        env = self._load_env_from_bat([vspath + "\\VC\\Auxiliary\\Build\\vcvarsall.bat", platform])
+
+        batpath = os.path.join(vspath, 'VC', 'vcvarsall.bat')
+
+        if not os.path.exists(batpath):
+            batpath = os.path.join(vspath, 'VC', 'Auxiliary', 'Build', 'vcvarsall.bat')
+
+        if not os.path.exists(batpath):
+            raise Exception('%s doesn\'t exist. Does your VS have C++ support?' % batpath)
+
+        env = self._load_env_from_bat([batpath, platform])
+
         env = self._extract_important_env(env)
         return env
 
